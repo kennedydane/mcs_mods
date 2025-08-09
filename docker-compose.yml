@@ -6,10 +6,11 @@ services:
       - "19132:19132/udp"  # Minecraft Bedrock server
       - "8000:8000/tcp"    # Management API
     volumes:
-      # Configuration files
+      # Main server config files
       - ./config/server.properties:/app/server.properties
       - ./config/allowlist.json:/app/allowlist.json
       - ./config/permissions.json:/app/permissions.json
+      - ./valid_known_packs.json:/app/valid_known_packs.json
       
       # World data (persistent)
       - minecraft-worlds:/app/worlds
