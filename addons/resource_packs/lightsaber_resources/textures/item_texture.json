@@ -4,6 +4,9 @@
   "texture_data": {
     "lightsaber": {
       "textures": "textures/items/lightsaber"
+    },
+    "blaster": {
+      "textures": "textures/items/blaster"
     }
   }
 }

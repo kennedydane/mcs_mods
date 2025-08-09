@@ -1,0 +1,18 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "dane:blaster_bolt",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/blaster_bolt"
+      },
+      "geometry": {
+        "default": "geometry.arrow"
+      },
+      "render_controllers": [ "controller.render.arrow" ]
+    }
+  }
+}

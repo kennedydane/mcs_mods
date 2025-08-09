@@ -171,13 +171,13 @@ The server needs to know that your packs are valid.
         "file_system": "RawPath",
         "path": "behavior_packs/enhanced_pickaxe",
         "uuid": "f4a1f1e0-1b2a-4b8e-9d4c-5a6b7c8d9e0f",
-        "version": "1.0.0"
+        "version": "1.2.1"
     },
     {
         "file_system": "RawPath",
         "path": "resource_packs/lightsaber_resources",
         "uuid": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
-        "version": "1.0.0"
+        "version": "1.2.1"
     }
 ]
 ```

@@ -1,27 +1,26 @@
 # Add-on Development Guide for This Project
 
-This guide provides a concrete, step-by-step walkthrough for creating and adding new custom add-ons to this specific server project. We will use the creation of a "Lightsaber" item as a practical example.
+This guide is the complete, step-by-step manual for creating, managing, and debugging add-ons within this specific server project.
 
-## Core Concepts
+## Core Architecture
 
-Our project uses a specific, robust method for managing add-ons to ensure they are loaded correctly by the dedicated server. The key components are:
+Our project uses a robust system to safely load custom add-ons without interfering with the server's vanilla content. Here are the key files and directories you need to know:
 
--   **`addons/` directory**: A staging area where you place your behavior and resource pack files. This is the only directory you need to touch when developing.
--   **`valid_known_packs.json`**: A master list that tells the server which packs are legitimate and should be considered for loading.
--   **`world_configs/` directory**: Contains files that tell a specific world which packs to *activate* on startup.
--   **`entrypoint.sh`**: A script that automatically copies your add-ons from the `addons/` directory into the server's internal directories when the container starts.
+-   **`addons/`**: This is your primary workspace. All your custom behavior packs and resource packs go in here. The server copies these at startup.
+-   **`valid_known_packs.json`**: This is the server's "master list". A pack **must** be registered here for the server to consider it valid.
+-   **`world_configs/`**: This directory contains files that tell your world which packs from the master list to actually *activate*.
+-   **`docker-compose.yml`**: This file maps your local `addons`, `valid_known_packs.json`, and `world_configs` into the container.
+-   **`entrypoint.sh`**: This script runs when the container starts, copying the contents of `addons/` into the live server directories.
 
 ---
 
-## Tutorial: Creating a Lightsaber
+## Part 1: Creating a New Melee Weapon (Lightsaber)
+
+This covers the basics of creating a new item and its texture.
 
 ### Step 1: Define the Item's Behavior
 
-First, we need to tell the game what a lightsaber is and what it does.
-
-1.  Navigate to `addons/behavior_packs/`. We will add our new item to the existing `enhanced_pickaxe` pack to keep things simple.
-2.  Create a new file at `addons/behavior_packs/enhanced_pickaxe/items/lightsaber.json`.
-3.  Add the following JSON content. This defines an item that does 50 damage, has high durability, and glows.
+Create a new JSON file at `addons/behavior_packs/enhanced_pickaxe/items/lightsaber.json`.
 
 ```json
 {
@@ -36,126 +35,222 @@ First, we need to tell the game what a lightsaber is and what it does.
       "minecraft:max_stack_size": 1,
       "minecraft:hand_equipped": true,
       "minecraft:foil": true,
-      "minecraft:durability": {
-        "max_durability": 5000
-      },
+      "minecraft:durability": { "max_durability": 5000 },
       "minecraft:damage": 50,
-      "minecraft:enchantable": {
-        "value": 15,
-        "slot": "sword"
-      },
-      "minecraft:can_destroy_in_creative": false,
-      "minecraft:icon": {
-        "texture": "lightsaber"
-      },
+      "minecraft:icon": { "texture": "lightsaber" },
       "minecraft:weapon": {}
     }
   }
 }
 ```
+**Crucial Points:**
+-   `"identifier"`: Must be unique. Use a personal prefix like `dane:`.
+-   `"is_experimental": true`: **Required** for all custom-namespaced items.
+-   `"format_version"`: Must be a modern version (e.g., 1.20.20+) for custom items.
 
-**Key Points:**
-*   `"identifier": "dane:lightsaber"`: This is the unique name for our item. The `dane:` part is a custom namespace.
-*   `"is_experimental": true`: This is **required** for custom items with unique identifiers.
-*   `"format_version": "1.20.20"`: A modern format version is **required** for custom items.
+### Step 2: Create the Item's Resource Pack
 
-### Step 2: Create the Item's Appearance (Resource Pack)
+1.  Create a new directory: `addons/resource_packs/lightsaber_resources`.
+2.  Create a `manifest.json` inside it. **You must generate two new, unique UUIDs** from a site like [uuidgenerator.net](https://www.uuidgenerator.net/).
 
-Now, let's create the resource pack that contains the lightsaber's texture.
-
-1.  Create a new directory for the pack: `addons/resource_packs/lightsaber_resources`.
-2.  Create the manifest file: `addons/resource_packs/lightsaber_resources/manifest.json`. This requires two **new, unique UUIDs**. You can generate them from a site like [uuidgenerator.net](https://www.uuidgenerator.net/).
-
-```json
-{
-  "format_version": 2,
-  "header": {
-    "description": "Lightsaber Resource Pack",
-    "name": "Lightsaber Resources",
-    "uuid": "GENERATE_A_NEW_UUID_HERE",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 21, 0]
-  },
-  "modules": [
+    ```json
     {
-      "description": "Lightsaber resources",
-      "type": "resources",
-      "uuid": "GENERATE_ANOTHER_NEW_UUID_HERE",
-      "version": [1, 0, 0]
+      "format_version": 2,
+      "header": {
+        "description": "Lightsaber Resource Pack",
+        "name": "Lightsaber Resources",
+        "uuid": "GENERATE_A_NEW_UUID_HERE",
+        "version": [1, 0, 1],
+        "min_engine_version": [1, 21, 0]
+      },
+      "modules": [
+        {
+          "description": "Lightsaber resources",
+          "type": "resources",
+          "uuid": "GENERATE_ANOTHER_NEW_UUID_HERE",
+          "version": [1, 0, 1]
+        }
+      ]
     }
-  ]
-}
-```
+    ```
+3.  Create `textures/item_texture.json` to map the texture name to a file.
+    ```json
+    {
+      "resource_pack_name": "lightsaber_resources",
+      "texture_name": "atlas.items",
+      "texture_data": {
+        "lightsaber": { "textures": "textures/items/lightsaber" }
+      }
+    }
+    ```
+4.  Place your `lightsaber.png` file in `textures/items/`.
 
-3.  Create the texture definition file at `addons/resource_packs/lightsaber_resources/textures/item_texture.json`. This maps the item's texture name (`lightsaber`) to a file path.
+### Step 3: Register and Activate the Packs
+
+1.  **Register:** Add the new resource pack to `valid_known_packs.json`. Use the UUID from your manifest's `header`.
+    ```json
+    {
+        "file_system": "RawPath",
+        "path": "resource_packs/lightsaber_resources",
+        "uuid": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
+        "version": "1.2.1"
+    }
+    ```
+2.  **Activate:** Add the same UUID to `world_configs/world_resource_packs.json`.
+    ```json
+    {
+        "pack_id": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
+        "version": [ 1, 0, 1 ]
+    }
+    ```
+
+---
+
+## Part 2: Creating a Ranged Weapon (Blaster)
+
+This builds on Part 1 by adding a projectile entity.
+
+### Step 1: Define the Blaster Item
+
+Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`. The key component is `minecraft:shooter`, which defines what projectile to fire and what ammunition it requires.
 
 ```json
 {
-  "resource_pack_name": "lightsaber_resources",
-  "texture_name": "atlas.items",
-  "texture_data": {
-    "lightsaber": {
-      "textures": "textures/items/lightsaber"
+  "format_version": "1.20.20",
+  "minecraft:item": {
+    "description": {
+      "identifier": "dane:blaster",
+      "category": "equipment",
+      "is_experimental": true
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:durability": { "max_durability": 250 },
+      "minecraft:icon": { "texture": "blaster" },
+      "minecraft:shooter": {
+        "projectile": "dane:blaster_bolt",
+        "launch_power": 3.0,
+        "ammunition": [
+          {
+            "item": "minecraft:arrow",
+            "use_offhand": true,
+            "search_inventory": true,
+            "use_in_creative": false
+          }
+        ]
+      },
+      "minecraft:use_animation": "bow",
+      "minecraft:use_duration": 1.0
     }
   }
 }
 ```
 
-4.  Create the actual texture file. Place a 16x16 PNG file at `addons/resource_packs/lightsaber_resources/textures/items/lightsaber.png`.
+**Key Components:**
+- `minecraft:shooter`: Defines projectile firing behavior
+- `ammunition`: Requires arrows in inventory to fire 
+- `use_duration`: 1.0 second charge time like a bow
+- `launch_power`: 3.0 determines projectile speed
 
-### Step 3: Register and Activate the New Packs
+**Usage:**
+- Give yourself the blaster: `/give @s dane:blaster`
+- Get ammunition: `/give @s minecraft:arrow 64`
+- Hold to charge like a bow, release to fire `dane:blaster_bolt`
 
-Now we tell the server and the world to load our new resource pack.
+### Step 2: Define the Projectile Entity
 
-1.  **Register the Pack:** Open the main `valid_known_packs.json` file and add an entry for your new resource pack. You'll need the UUID from its `manifest.json`.
+1.  Create a new directory: `addons/behavior_packs/enhanced_pickaxe/entities/`.
+2.  Create `blaster_bolt.json` inside it. This defines the projectile's physics and damage.
 
-```json
-[
+    ```json
     {
-        "file_system": "RawPath",
-        "path": "behavior_packs/enhanced_pickaxe",
-        "uuid": "f4a1f1e0-1b2a-4b8e-9d4c-5a6b7c8d9e0f",
-        "version": "1.0.0"
-    },
-    {
-        "file_system": "RawPath",
-        "path": "resource_packs/lightsaber_resources",
-        "uuid": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
-        "version": "1.0.0"
+      "format_version": "1.16.0",
+      "minecraft:entity": {
+        "description": {
+          "identifier": "dane:blaster_bolt",
+          "is_summonable": true
+        },
+        "components": {
+          "minecraft:projectile": {
+            "on_hit": { "impact_damage": { "damage": 15 } },
+            "gravity": 0.0
+          },
+          "minecraft:physics": {}
+        }
+      }
     }
-]
-```
-
-2.  **Activate the Pack:** Open `world_configs/world_resource_packs.json` and add an entry to activate the pack for the world.
-
-```json
-[
-    {
-        "pack_id": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
-        "version": [
-            1,
-            0,
-            0
-        ]
-    }
-]
-```
-
-### Step 4: Test In-Game
-
-You're all set!
-
-1.  **Restart the server:**
-    ```bash
-    docker compose restart
-    ```
-    *(If you ever change the `Dockerfile` or `entrypoint.sh`, you must use `docker compose up --build` instead).*
-
-2.  **Connect to the server.** It should prompt you to download the resource packs. This is a great sign!
-
-3.  **Give yourself the item.** Once in the world, run the command:
-    ```bash
-    /give @s dane:lightsaber
     ```
 
-If it works, the lightsaber will appear in your inventory. If it fails, check the server logs (`docker compose logs`) for JSON parsing errors. The server is very specific about syntax, and a single missing comma can cause a pack to fail loading.
+### Step 3: Add Textures and Client-Side Definitions
+
+1.  Add `blaster.png` to `textures/items/` in your resource pack.
+2.  Add `blaster_bolt.png` to a new `textures/entity/` directory.
+3.  Update `item_texture.json` to include the new `blaster` texture.
+4.  Create a **client entity file** at `addons/resource_packs/lightsaber_resources/entity/blaster_bolt.json`. This is crucial for telling the game how to *render* the projectile.
+
+    ```json
+    {
+      "format_version": "1.10.0",
+      "minecraft:client_entity": {
+        "description": {
+          "identifier": "dane:blaster_bolt",
+          "materials": { "default": "entity_alphatest" },
+          "textures": { "default": "textures/entity/blaster_bolt" },
+          "geometry": { "default": "geometry.arrow" },
+          "render_controllers": [ "controller.render.arrow" ]
+        }
+      }
+    }
+    ```
+
+---
+
+## Part 3: Workflow and Debugging
+
+### Updating an Existing Pack
+
+When you add new content (like the blaster) to an existing pack, you **must increment the version number** to force clients to re-download it.
+
+**ALL 5 FILES** must be updated with the same version number:
+
+1.  **Behavior Pack Manifest**: `addons/behavior_packs/enhanced_pickaxe/manifest.json`
+    - Change `[1, 2, 1]` to `[1, 2, 2]` in both the `header` and `modules` sections.
+
+2.  **Resource Pack Manifest**: `addons/resource_packs/lightsaber_resources/manifest.json`  
+    - Change `[1, 2, 1]` to `[1, 2, 2]` in both the `header` and `modules` sections.
+
+3.  **Server Pack Registry**: `valid_known_packs.json`
+    - Change `"1.2.1"` to `"1.2.2"` for **both** behavior and resource pack entries.
+
+4.  **World Behavior Pack Config**: `world_configs/world_behavior_packs.json`
+    - Change `[1, 2, 1]` to `[1, 2, 2]`.
+
+5.  **World Resource Pack Config**: `world_configs/world_resource_packs.json`
+    - Change `[1, 2, 1]` to `[1, 2, 2]`.
+
+⚠️ **Critical:** If even ONE file has the wrong version, clients won't reload the packs!
+
+### Debugging Checklist
+
+Follow these steps if something isn't working.
+
+1.  **Restart the Server:** After any change, run `docker compose restart`.
+2.  **Client Doesn't Download Packs?**
+    -   You forgot to update the version numbers in **all 5 files** listed above after an update.
+    -   Check that both behavior AND resource pack versions match everywhere.
+3.  **`/give` Command Fails ("Unknown item")**
+    -   Check the server logs: `docker compose logs`.
+    -   Look for JSON parsing errors. A single missing comma or bracket will cause this.
+    -   Did you forget `"is_experimental": true` in the item's description?
+    -   Is the `"format_version"` high enough (e.g., 1.20.20+)?
+4.  **Item Appears But Action Fails (e.g., Blaster doesn't shoot)**
+    -   Again, check the logs. The server will report if it can't find the projectile entity (`dane:blaster_bolt`).
+    -   This is likely an error in the projectile's entity file (`blaster_bolt.json`).
+5.  **Item/Entity is Invisible or a Purple/Black Box**
+    -   The link between the entity and its texture is broken.
+    -   Did you create the client-side entity file (e.g., `resource_packs/.../entity/blaster_bolt.json`)?
+    -   Are the paths in `item_texture.json` and the client entity file correct?
+6.  **Weird On-Screen Text or Unwanted Effects**
+    -   Your behavior pack likely has a "ticking function".
+    -   Look for a `functions` directory in the behavior pack and check the `.mcfunction` files for commands like `/title` or `/effect`.
