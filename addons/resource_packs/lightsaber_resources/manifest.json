@@ -4,7 +4,7 @@
     "description": "Lightsaber Resource Pack",
     "name": "Lightsaber Resources",
     "uuid": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
-    "version": [1, 2, 2],
+    "version": [1, 12, 11],
     "min_engine_version": [1, 21, 0]
   },
   "modules": [
@@ -12,7 +12,7 @@
       "description": "Lightsaber resources",
       "type": "resources",
       "uuid": "f0e9d8c7-b6a5-4c3d-2e1f-0a9b8c7d6e5f",
-      "version": [1, 2, 2]
+      "version": [1, 12, 0]
     }
   ]
 }

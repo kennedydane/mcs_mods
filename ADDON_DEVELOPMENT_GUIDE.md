@@ -106,13 +106,23 @@ Create a new JSON file at `addons/behavior_packs/enhanced_pickaxe/items/lightsab
 
 ---
 
-## Part 2: Creating a Ranged Weapon (Blaster)
+## Part 2: Creating High-Performance Ranged Weapons
 
-This builds on Part 1 by adding a projectile entity.
+This section covers creating accurate, instant-firing projectile weapons like blasters. We'll use a proven two-component system: a shooter item + custom ammunition that spawns projectile entities.
 
-### Step 1: Define the Blaster Item
+### Architecture Overview
 
-Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`. The key component is `minecraft:shooter`, which defines what projectile to fire and what ammunition it requires.
+The most reliable approach uses three components:
+
+1. **Shooter Item** (`dane:blaster`) - Uses `minecraft:shooter` with instant firing
+2. **Ammunition Item** (`dane:blaster_bolt`) - Uses `minecraft:throwable` + `minecraft:projectile` 
+3. **Projectile Entity** (`dane:blaster_bolt` entity) - Defines physics and damage
+
+This hybrid approach gives you precise control over accuracy and performance.
+
+### Step 1: Create the Instant-Fire Blaster
+
+Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`:
 
 ```json
 {
@@ -121,7 +131,7 @@ Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`. The key comp
     "description": {
       "identifier": "dane:blaster",
       "category": "equipment",
-      "is_experimental": true
+      "is_experimental": false
     },
     "components": {
       "minecraft:max_stack_size": 1,
@@ -129,16 +139,17 @@ Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`. The key comp
       "minecraft:durability": { "max_durability": 250 },
       "minecraft:icon": { "texture": "blaster" },
       "minecraft:shooter": {
-        "projectile": "dane:blaster_bolt",
-        "launch_power": 3.0,
         "ammunition": [
           {
-            "item": "minecraft:arrow",
+            "item": "dane:blaster_bolt",
             "use_offhand": true,
             "search_inventory": true,
-            "use_in_creative": false
+            "use_in_creative": true
           }
-        ]
+        ],
+        "max_draw_duration": 0.0,
+        "scale_power_by_draw_duration": false,
+        "charge_on_draw": false
       },
       "minecraft:use_animation": "bow",
       "minecraft:use_duration": 1.0
@@ -147,40 +158,134 @@ Create `addons/behavior_packs/enhanced_pickaxe/items/blaster.json`. The key comp
 }
 ```
 
-**Key Components:**
-- `minecraft:shooter`: Defines projectile firing behavior
-- `ammunition`: Requires arrows in inventory to fire 
-- `use_duration`: 1.0 second charge time like a bow
-- `launch_power`: 3.0 determines projectile speed
+**Key Settings for Instant Firing:**
+- `max_draw_duration: 0.0` - No charging required
+- `scale_power_by_draw_duration: false` - Full power immediately  
+- `charge_on_draw: false` - No charge animation
 
-**Usage:**
-- Give yourself the blaster: `/give @s dane:blaster`
-- Get ammunition: `/give @s minecraft:arrow 64`
-- Hold to charge like a bow, release to fire `dane:blaster_bolt`
+### Step 2: Create High-Accuracy Ammunition
 
-### Step 2: Define the Projectile Entity
+Create `addons/behavior_packs/enhanced_pickaxe/items/blaster_bolt.json`:
 
-1.  Create a new directory: `addons/behavior_packs/enhanced_pickaxe/entities/`.
-2.  Create `blaster_bolt.json` inside it. This defines the projectile's physics and damage.
+```json
+{
+  "format_version": "1.20.20",
+  "minecraft:item": {
+    "description": {
+      "identifier": "dane:blaster_bolt",
+      "category": "equipment",
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:max_stack_size": 64,
+      "minecraft:icon": { "texture": "blaster_bolt" },
+      "minecraft:throwable": {
+        "do_swing_animation": false,
+        "launch_power_scale": 2.0,
+        "max_draw_duration": 0.0,
+        "max_launch_power": 2.0,
+        "min_draw_duration": 0.0,
+        "scale_power_by_draw_duration": false
+      },
+      "minecraft:projectile": {
+        "minimum_critical_power": 0.0,
+        "projectile_entity": "dane:blaster_bolt"
+      }
+    }
+  }
+}
+```
 
-    ```json
-    {
-      "format_version": "1.16.0",
-      "minecraft:entity": {
-        "description": {
-          "identifier": "dane:blaster_bolt",
-          "is_summonable": true
+**Accuracy-Critical Settings:**
+- `do_swing_animation: false` - Removes animation delays
+- `launch_power_scale: 2.0` - Consistent power delivery
+- `minimum_critical_power: 0.0` - No accuracy penalty for low power
+
+### Step 3: Create Optimized Projectile Entity
+
+Create `addons/behavior_packs/enhanced_pickaxe/entities/blaster_bolt.json`. Base this on Mojang's proven patterns:
+
+```json
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "dane:blaster_bolt",
+      "is_spawnable": false,
+      "is_summonable": false
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "width": 0.31,
+        "height": 0.31
+      },
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 20,
+            "knockback": true,
+            "semi_random_diff_damage": false
+          }
         },
-        "components": {
-          "minecraft:projectile": {
-            "on_hit": { "impact_damage": { "damage": 15 } },
-            "gravity": 0.0
-          },
-          "minecraft:physics": {}
+        "power": 3.5,
+        "gravity": 0.005,
+        "inertia": 1,
+        "liquid_inertia": 1,
+        "anchor": 1,
+        "offset": [0, 0, 0],
+        "semi_random_diff_damage": false,
+        "uncertainty_base": 0.0,
+        "reflect_on_hurt": false
+      },
+      "minecraft:physics": {},
+      "minecraft:dimension_bound": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:conditional_bandwidth_optimization": {
+        "default_values": {
+          "max_optimized_distance": 80.0,
+          "max_dropped_ticks": 7,
+          "use_motion_prediction_hints": true
         }
       }
     }
-    ```
+  }
+}
+```
+
+**Performance & Accuracy Settings:**
+- `uncertainty_base: 0.0` - Perfect accuracy (no random spread)
+- `offset: [0, 0, 0]` - Projectiles spawn exactly where aimed
+- `anchor: 1` - Optimal spawn reference point
+- `power: 3.5` - High speed for long range
+- `gravity: 0.005` - Minimal drop over distance
+- `semi_random_diff_damage: false` - Consistent damage
+- `conditional_bandwidth_optimization` - Network performance boost
+
+### Performance Tuning Guide
+
+**For Maximum Accuracy:**
+- Set `uncertainty_base: 0.0` in entity
+- Use `anchor: 1` for consistent spawn point
+- Set `offset: [0, 0, 0]` to eliminate aim offset
+- Disable `do_swing_animation` in ammunition
+
+**For Long Range:**
+- Increase `power` (3.5+ recommended)
+- Minimize `gravity` (0.005 or less)
+- Use `launch_power_scale: 2.0` in ammunition
+
+**For Instant Firing:**
+- Set `max_draw_duration: 0.0` in shooter
+- Use `charge_on_draw: false`
+- Set `scale_power_by_draw_duration: false`
+
+**For Network Performance:**
+- Include `conditional_bandwidth_optimization` 
+- Use proven collision box sizes (0.31x0.31)
+- Set entities as non-spawnable/non-summonable
 
 ### Step 3: Add Textures and Client-Side Definitions
 
@@ -242,7 +347,7 @@ Follow these steps if something isn't working.
 3.  **`/give` Command Fails ("Unknown item")**
     -   Check the server logs: `docker compose logs`.
     -   Look for JSON parsing errors. A single missing comma or bracket will cause this.
-    -   Did you forget `"is_experimental": true` in the item's description?
+    -   Did you forget `"is_experimental": false` in the item's description?
     -   Is the `"format_version"` high enough (e.g., 1.20.20+)?
 4.  **Item Appears But Action Fails (e.g., Blaster doesn't shoot)**
     -   Again, check the logs. The server will report if it can't find the projectile entity (`dane:blaster_bolt`).
@@ -254,3 +359,46 @@ Follow these steps if something isn't working.
 6.  **Weird On-Screen Text or Unwanted Effects**
     -   Your behavior pack likely has a "ticking function".
     -   Look for a `functions` directory in the behavior pack and check the `.mcfunction` files for commands like `/title` or `/effect`.
+
+### Projectile Weapon Troubleshooting
+
+**Weapon won't fire at all:**
+- Check if you have ammunition (`dane:blaster_bolt` items) in inventory
+- Verify `ammunition` array in shooter references the correct item
+- Ensure `minecraft:use_duration` is set (try 1.0)
+- Look for server logs mentioning missing entities
+
+**Projectiles are inaccurate:**
+- Set `uncertainty_base: 0.0` in the projectile entity
+- Use `anchor: 1` instead of higher values
+- Ensure `offset: [0, 0, 0]` to eliminate spawn offset
+- Set `do_swing_animation: false` in ammunition item
+- Increase `launch_power_scale` to 2.0+ in ammunition
+
+**Projectiles don't go far enough:**
+- Increase `power` in projectile entity (3.5+ recommended)  
+- Reduce `gravity` to 0.005 or lower
+- Check that `max_launch_power` in ammunition matches requirements
+
+**Projectiles shoot above crosshair:**
+- This is caused by `offset: [0, 0.5, 0]` - change to `[0, 0, 0]`
+- Wrong `anchor` value can also cause offset issues
+
+**Slow projectile speed:**
+- Increase `power` in entity (try 3.5+)
+- Ensure `launch_power_scale` is 2.0+ in ammunition item
+- Check `max_launch_power` in ammunition (should be 2.0+)
+
+**Weapon requires charging (like bow):**
+- Set `max_draw_duration: 0.0` in shooter component
+- Use `charge_on_draw: false` 
+- Set `scale_power_by_draw_duration: false`
+
+**Inconsistent damage:**
+- Set `semi_random_diff_damage: false` in both impact_damage and entity
+- Use fixed damage values, avoid damage ranges
+
+**Network/Performance Issues:**
+- Add `conditional_bandwidth_optimization` component to entity
+- Use standard collision box sizes (0.31x0.31)
+- Set entities as `is_spawnable: false, is_summonable: false`

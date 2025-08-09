@@ -7,6 +7,9 @@
     },
     "blaster": {
       "textures": "textures/items/blaster"
+    },
+    "blaster_bolt": {
+      "textures": "textures/items/blaster_bolt"
     }
   }
 }
