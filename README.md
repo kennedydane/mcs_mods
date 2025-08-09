@@ -196,7 +196,7 @@ The system uses a **Python wrapper approach** for maximum flexibility:
    - Starts `bedrock_server` as a subprocess
    - Captures and logs all server output
    - Exposes REST API for command injection
-   - Handles graceful startup/shutdown
+   - Handles graceful startup/shutdown using modern FastAPI lifespan handlers
 3. **FastAPI** provides the REST interface for external control
 4. **Docker Compose** orchestrates the container with volume mounts
 
