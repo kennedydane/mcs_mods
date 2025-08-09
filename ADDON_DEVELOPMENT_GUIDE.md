@@ -1,340 +1,161 @@
-# Minecraft Bedrock Add-on Development Guide
+# Add-on Development Guide for This Project
 
-## Overview
+This guide provides a concrete, step-by-step walkthrough for creating and adding new custom add-ons to this specific server project. We will use the creation of a "Lightsaber" item as a practical example.
 
-This guide covers best practices for developing Minecraft Bedrock Edition add-ons in 2025, based on the latest official documentation and tools from Microsoft/Mojang.
+## Core Concepts
 
-## What Are Add-ons?
+Our project uses a specific, robust method for managing add-ons to ensure they are loaded correctly by the dedicated server. The key components are:
 
-Minecraft Bedrock add-ons consist of two main components:
+-   **`addons/` directory**: A staging area where you place your behavior and resource pack files. This is the only directory you need to touch when developing.
+-   **`valid_known_packs.json`**: A master list that tells the server which packs are legitimate and should be considered for loading.
+-   **`world_configs/` directory**: Contains files that tell a specific world which packs to *activate* on startup.
+-   **`entrypoint.sh`**: A script that automatically copies your add-ons from the `addons/` directory into the server's internal directories when the container starts.
 
-- **Resource Packs**: Custom models, sounds, textures, and visual content
-- **Behavior Packs**: Entity behaviors, loot drops, spawn rules, items, recipes, trade tables, and scripting logic
+---
 
-## Development Environment Setup
+## Tutorial: Creating a Lightsaber
 
-### Required Tools
+### Step 1: Define the Item's Behavior
 
-1. **Visual Studio Code** - Free editor with excellent JSON support and Bedrock-specific extensions
-2. **Minecraft Creator Tools (mctools.dev)** - Official Mojang toolset for project creation and validation
-3. **Node.js** - Required for command-line creator tools
-4. **Git** - Version control for your add-on projects
+First, we need to tell the game what a lightsaber is and what it does.
 
-### Installing Creator Tools
+1.  Navigate to `addons/behavior_packs/`. We will add our new item to the existing `enhanced_pickaxe` pack to keep things simple.
+2.  Create a new file at `addons/behavior_packs/enhanced_pickaxe/items/lightsaber.json`.
+3.  Add the following JSON content. This defines an item that does 50 damage, has high durability, and glows.
 
-```bash
-# Install the command-line tools via npm
-npm install -g @minecraft/creator-tools
-
-# Or use the web interface at https://mctools.dev
+```json
+{
+  "format_version": "1.20.20",
+  "minecraft:item": {
+    "description": {
+      "identifier": "dane:lightsaber",
+      "category": "equipment",
+      "is_experimental": true
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:foil": true,
+      "minecraft:durability": {
+        "max_durability": 5000
+      },
+      "minecraft:damage": 50,
+      "minecraft:enchantable": {
+        "value": 15,
+        "slot": "sword"
+      },
+      "minecraft:can_destroy_in_creative": false,
+      "minecraft:icon": {
+        "texture": "lightsaber"
+      },
+      "minecraft:weapon": {}
+    }
+  }
+}
 ```
 
-### Development Folders
+**Key Points:**
+*   `"identifier": "dane:lightsaber"`: This is the unique name for our item. The `dane:` part is a custom namespace.
+*   `"is_experimental": true`: This is **required** for custom items with unique identifiers.
+*   `"format_version": "1.20.20"`: A modern format version is **required** for custom items.
 
-Use these special folders for active development:
-- `development_resource_packs/` - Updated each time Minecraft launches
-- `development_behavior_packs/` - Updated each time Minecraft launches
+### Step 2: Create the Item's Appearance (Resource Pack)
 
-## Project Structure Best Practices
+Now, let's create the resource pack that contains the lightsaber's texture.
 
-### Basic Add-on Structure
-
-```
-my-addon/
-├── behavior_pack/
-│   ├── manifest.json
-│   ├── pack_icon.png
-│   ├── entities/
-│   ├── items/
-│   ├── recipes/
-│   ├── loot_tables/
-│   ├── functions/
-│   └── scripts/
-│       └── main.js
-└── resource_pack/
-    ├── manifest.json
-    ├── pack_icon.png
-    ├── textures/
-    ├── models/
-    ├── sounds/
-    └── animations/
-```
-
-### Manifest.json Format (2025)
-
-#### Behavior Pack Manifest
+1.  Create a new directory for the pack: `addons/resource_packs/lightsaber_resources`.
+2.  Create the manifest file: `addons/resource_packs/lightsaber_resources/manifest.json`. This requires two **new, unique UUIDs**. You can generate them from a site like [uuidgenerator.net](https://www.uuidgenerator.net/).
 
 ```json
 {
   "format_version": 2,
   "header": {
-    "description": "My Custom Add-on",
-    "name": "My Add-on",
-    "uuid": "unique-uuid-here",
+    "description": "Lightsaber Resource Pack",
+    "name": "Lightsaber Resources",
+    "uuid": "GENERATE_A_NEW_UUID_HERE",
     "version": [1, 0, 0],
-    "min_engine_version": [1, 21, 90]
+    "min_engine_version": [1, 21, 0]
   },
   "modules": [
     {
-      "description": "Behavior Pack Module",
-      "type": "data",
-      "uuid": "another-unique-uuid",
+      "description": "Lightsaber resources",
+      "type": "resources",
+      "uuid": "GENERATE_ANOTHER_NEW_UUID_HERE",
       "version": [1, 0, 0]
+    }
+  ]
+}
+```
+
+3.  Create the texture definition file at `addons/resource_packs/lightsaber_resources/textures/item_texture.json`. This maps the item's texture name (`lightsaber`) to a file path.
+
+```json
+{
+  "resource_pack_name": "lightsaber_resources",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "lightsaber": {
+      "textures": "textures/items/lightsaber"
+    }
+  }
+}
+```
+
+4.  Create the actual texture file. Place a 16x16 PNG file at `addons/resource_packs/lightsaber_resources/textures/items/lightsaber.png`.
+
+### Step 3: Register and Activate the New Packs
+
+Now we tell the server and the world to load our new resource pack.
+
+1.  **Register the Pack:** Open the main `valid_known_packs.json` file and add an entry for your new resource pack. You'll need the UUID from its `manifest.json`.
+
+```json
+[
+    {
+        "file_system": "RawPath",
+        "path": "behavior_packs/enhanced_pickaxe",
+        "uuid": "f4a1f1e0-1b2a-4b8e-9d4c-5a6b7c8d9e0f",
+        "version": "1.0.0"
     },
     {
-      "description": "Script Module",
-      "type": "script",
-      "language": "javascript",
-      "entry": "scripts/main.js",
-      "uuid": "script-module-uuid",
-      "version": [1, 0, 0]
+        "file_system": "RawPath",
+        "path": "resource_packs/lightsaber_resources",
+        "uuid": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
+        "version": "1.0.0"
     }
-  ],
-  "dependencies": [
-    {
-      "module_name": "@minecraft/server",
-      "version": "2.0.0"
-    }
-  ]
-}
+]
 ```
 
-#### Resource Pack Manifest
+2.  **Activate the Pack:** Open `world_configs/world_resource_packs.json` and add an entry to activate the pack for the world.
 
 ```json
-{
-  "format_version": 2,
-  "header": {
-    "description": "My Custom Add-on Resources",
-    "name": "My Add-on Resources",
-    "uuid": "resource-pack-uuid",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 21, 90]
-  },
-  "modules": [
+[
     {
-      "description": "Resource Pack Module",
-      "type": "resources",
-      "uuid": "resource-module-uuid",
-      "version": [1, 0, 0]
+        "pack_id": "THE_UUID_FROM_YOUR_MANIFEST_HEADER",
+        "version": [
+            1,
+            0,
+            0
+        ]
     }
-  ]
-}
+]
 ```
 
-## Scripting API Best Practices (2025)
+### Step 4: Test In-Game
 
-### Version 2.0.0 Migration
+You're all set!
 
-The Scripting API v2.0.0 is now the recommended version with significant improvements:
+1.  **Restart the server:**
+    ```bash
+    docker compose restart
+    ```
+    *(If you ever change the `Dockerfile` or `entrypoint.sh`, you must use `docker compose up --build` instead).*
 
-- **Earlier Initialization**: Scripts now initialize much earlier in world startup
-- **Stable API Modules**: No breaking changes in stable releases
-- **Improved Performance**: Better event handling and data management
+2.  **Connect to the server.** It should prompt you to download the resource packs. This is a great sign!
 
-### Core Modules
+3.  **Give yourself the item.** Once in the world, run the command:
+    ```bash
+    /give @s dane:lightsaber
+    ```
 
-```javascript
-// Import stable modules (no Beta APIs experiment needed)
-import { world, system, BlockPermutation } from '@minecraft/server';
-import { ActionFormData, MessageFormData } from '@minecraft/server-ui';
-
-// Event-driven architecture example
-world.afterEvents.itemUse.subscribe((event) => {
-    const player = event.source;
-    const item = event.itemStack;
-    
-    // Handle item usage
-    player.sendMessage(`You used: ${item.typeId}`);
-});
-
-// Dynamic properties for data storage
-world.setDynamicProperty('myData', 'persistent value');
-const data = world.getDynamicProperty('myData'); // Returns 'persistent value'
-```
-
-### Modern API Patterns
-
-```javascript
-// Use system.runJob for async operations instead of runCommandAsync
-system.runJob(function* () {
-    yield;
-    // Long-running operation
-    for (let i = 0; i < 1000; i++) {
-        // Process data
-        yield; // Yield control back to the game
-    }
-});
-
-// New knockback API pattern (v2.0.0)
-entity.applyKnockback(
-    { x: 1, z: 0 }, // Direction vector (normalized)
-    5, // Horizontal strength
-    2  // Vertical strength
-);
-```
-
-## Development Workflow
-
-### 1. Project Creation
-
-Start projects using mctools.dev for best practices:
-
-```bash
-# Command line approach
-mc-tools create-project --template behavior-pack my-addon
-
-# Or use the web interface at https://mctools.dev
-```
-
-### 2. Validation and Testing
-
-```bash
-# Validate your add-on structure
-mc-tools validate ./my-addon
-
-# Check for current platform version compliance
-# Use the Inspector tool at mctools.dev
-```
-
-### 3. Packaging for Distribution
-
-```bash
-# Create .mcaddon file for distribution
-mc-tools package ./my-addon --output my-addon.mcaddon
-```
-
-## File Organization Best Practices
-
-### Entity Files
-
-```
-behavior_pack/entities/
-├── custom_mob.json          # Entity definition
-├── custom_mob_client.json   # Client-side behaviors
-└── spawn_rules/
-    └── custom_mob.json      # Spawn conditions
-```
-
-### Item Files
-
-```
-behavior_pack/items/
-├── custom_sword.json        # Item definition
-└── recipes/
-    └── custom_sword.json    # Crafting recipe
-```
-
-### Function Files
-
-```
-behavior_pack/functions/
-├── setup.mcfunction         # Initialization commands
-├── tick.json               # Tick function configuration
-└── utility/
-    └── teleport.mcfunction  # Utility functions
-```
-
-## Testing and Debugging
-
-### Local Testing
-
-1. Place your add-on in development folders
-2. Enable experimental features if using Beta APIs:
-   - Beta APIs
-   - Holiday Creator Features
-   - Custom Biomes
-   - Upcoming Creator Features
-
-### Debugging Scripts
-
-```javascript
-import { world } from '@minecraft/server';
-
-// Console logging for debugging
-console.warn('Debug message'); // Shows in content log
-world.sendMessage('Server message'); // Shows to all players
-
-// Error handling
-try {
-    // Risky operation
-    player.runCommand('risky command');
-} catch (error) {
-    console.error('Command failed:', error);
-}
-```
-
-## Performance Optimization
-
-### Script Performance
-
-- Use `afterEvents` instead of `beforeEvents` unless cancellation is needed
-- Batch operations using `system.runJob` with yields
-- Limit dynamic property usage (32KB per property limit)
-- Cache frequently accessed data
-
-### Resource Optimization
-
-- Optimize texture sizes (powers of 2: 16x16, 32x32, 64x64)
-- Use efficient model geometries
-- Compress audio files appropriately
-- Minimize unused assets
-
-## Distribution and Compatibility
-
-### Version Management
-
-- Follow N-1 rule for `min_engine_version`
-- Use stable API versions for production
-- Test on multiple Minecraft versions
-- Document version requirements clearly
-
-### Platform Considerations
-
-- Test on multiple devices (mobile, console, PC)
-- Consider performance limitations on mobile
-- Ensure UI elements scale properly
-- Test network synchronization in multiplayer
-
-## Common Pitfalls to Avoid
-
-1. **Using Beta APIs in Production**: Stick to stable APIs unless necessary
-2. **Hardcoded Values**: Use configuration files and dynamic properties
-3. **Excessive Command Usage**: Prefer Script API over commands when possible
-4. **Poor Error Handling**: Always wrap risky operations in try-catch
-5. **Memory Leaks**: Properly unsubscribe from events when needed
-6. **Large Texture Files**: Optimize images for better performance
-
-## Resources and Documentation
-
-### Official Resources
-
-- [Microsoft Learn - Minecraft Creator](https://learn.microsoft.com/en-us/minecraft/creator/)
-- [Minecraft Creator Tools](https://mctools.dev/)
-- [Script API Reference](https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/)
-- [Bedrock Samples on GitHub](https://github.com/Mojang/bedrock-samples)
-
-### Community Resources
-
-- [Bedrock Wiki](https://wiki.bedrock.dev/)
-- [MCPEDL](https://mcpedl.com/) - Add-on distribution
-- [CurseForge Bedrock](https://www.curseforge.com/minecraft-bedrock)
-
-### Validation Tools
-
-- Use mctools.dev Inspector for platform version validation
-- Enable content logging in Minecraft for debugging
-- Test in creative mode before survival deployment
-
-## Next Steps
-
-This guide provides the foundation for modern Minecraft Bedrock add-on development. The next phase would involve:
-
-1. Choosing a specific add-on concept
-2. Setting up the development environment
-3. Creating the basic project structure
-4. Implementing core functionality
-5. Testing and iterating
-6. Packaging for distribution
-
-Remember to stay updated with the latest Minecraft versions and API changes, as the platform continues to evolve rapidly.
+If it works, the lightsaber will appear in your inventory. If it fails, check the server logs (`docker compose logs`) for JSON parsing errors. The server is very specific about syntax, and a single missing comma can cause a pack to fail loading.

@@ -10,15 +10,15 @@
 - ✅ Set up configuration file mounting (server.properties, allowlist.json, permissions.json)
 - ✅ Implemented Python wrapper with REST API for command injection
 - ✅ Implemented comprehensive logging strategy
-- ✅ Set up add-on mounting/management system for behavior and resource packs
+- ✅ Re-engineered add-on system with staging, entrypoint script, and explicit pack validation/activation
 - ✅ Created Dockerfile with uv dependency management
 - ✅ Created management script (manage.py) for easy server control
+- ✅ Tested the complete server setup and add-on workflow
 
 ### In Progress
-- [ ] (none currently)
+- [ ] Document new add-on development workflow in a dedicated guide
 
 ### Pending
-- [ ] Test the complete setup
 - [ ] Add authentication to management API
 - [ ] Create backup/restore functionality
 - [ ] Add health monitoring and alerts

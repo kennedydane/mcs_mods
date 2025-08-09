@@ -142,63 +142,100 @@ allow-cheats=false
 
 ### Add-ons
 
-#### Behavior Packs
+This project uses a robust staging and configuration system to manage add-ons, ensuring that custom packs are safely merged with vanilla packs without overwriting them.
 
-Place behavior packs in the `behavior_packs/` directory:
+#### 1. Place Your Add-on Files
 
-```
-behavior_packs/
-├── my-custom-pack/
-│   ├── manifest.json
-│   ├── pack_icon.png
-│   └── behaviors/
-└── another-pack/
-```
-
-#### Resource Packs
-
-Place resource packs in the `resource_packs/` directory:
+- Place your custom **behavior packs** in the `addons/behavior_packs/` directory.
+- Place your custom **resource packs** in the `addons/resource_packs/` directory.
 
 ```
-resource_packs/
-├── texture-pack/
-│   ├── manifest.json
-│   ├── pack_icon.png
-│   └── textures/
-└── ui-pack/
+addons/
+├── behavior_packs/
+│   └── enhanced_pickaxe/
+└── resource_packs/
+    └── lightsaber_resources/
+```
+
+#### 2. Register Your Packs with the Server
+
+The server needs to know that your packs are valid.
+
+- Open `valid_known_packs.json`.
+- Add an entry for each of your packs, specifying its path, UUID, and version from its `manifest.json`.
+
+```json
+// valid_known_packs.json
+[
+    {
+        "file_system": "RawPath",
+        "path": "behavior_packs/enhanced_pickaxe",
+        "uuid": "f4a1f1e0-1b2a-4b8e-9d4c-5a6b7c8d9e0f",
+        "version": "1.0.0"
+    },
+    {
+        "file_system": "RawPath",
+        "path": "resource_packs/lightsaber_resources",
+        "uuid": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+        "version": "1.0.0"
+    }
+]
+```
+
+#### 3. Activate Packs for Your World
+
+To automatically activate packs for a specific world, you must configure them.
+
+- Open `world_configs/world_behavior_packs.json` and `world_configs/world_resource_packs.json`.
+- Add an entry for each pack you want to be active, specifying its `pack_id` (the UUID from its manifest) and `version`.
+
+The `docker-compose.yml` is configured to mount these files into the `Bedrock level` world by default. If your world has a different name, you will need to update the paths in `docker-compose.yml`.
+
+#### 4. Restart the Server
+
+After making changes to your add-ons or configuration files, you must restart the server for them to take effect. If you've changed the `Dockerfile` or `entrypoint.sh`, you must rebuild.
+
+```bash
+# If you only changed add-ons or configs
+docker compose restart
+
+# If you changed Dockerfile or entrypoint.sh
+docker compose up --build -d
 ```
 
 ## Project Structure
 
 ```
 mcs_mods/
-├── config/                     # Server configuration files
+├── addons/                     # Staging directory for custom add-ons
+│   ├── behavior_packs/
+│   └── resource_packs/
+├── config/                     # Main server configuration
 │   ├── server.properties
 │   ├── allowlist.json
 │   └── permissions.json
-├── behavior_packs/             # Behavior pack add-ons
-├── resource_packs/             # Resource pack add-ons  
+├── world_configs/              # World-specific pack activation
+│   ├── world_behavior_packs.json
+│   └── world_resource_packs.json
 ├── logs/                       # Server logs (host accessible)
+├── valid_known_packs.json      # Master list of valid server packs
 ├── server_wrapper.py           # Python server management wrapper
 ├── manage.py                   # CLI management tool
+├── entrypoint.sh               # Script to merge add-ons on start
 ├── docker-compose.yml          # Container orchestration
 ├── Dockerfile                  # Container definition
-├── pyproject.toml              # Python dependencies (uv)
-└── bedrock-server-1.21.100.7.zip  # Server binary
+└── pyproject.toml              # Python dependencies
 ```
 
 ## Architecture
 
-The system uses a **Python wrapper approach** for maximum flexibility:
+The system uses a **Python wrapper and an entrypoint script** for maximum flexibility:
 
-1. **Docker Container** runs Ubuntu with Python and the Bedrock server
-2. **Python Wrapper** (`server_wrapper.py`) manages the server process:
-   - Starts `bedrock_server` as a subprocess
-   - Captures and logs all server output
-   - Exposes REST API for command injection
-   - Handles graceful startup/shutdown using modern FastAPI lifespan handlers
-3. **FastAPI** provides the REST interface for external control
-4. **Docker Compose** orchestrates the container with volume mounts
+1. **Docker Container** runs Ubuntu with Python and the Bedrock server.
+2. **Entrypoint Script** (`entrypoint.sh`) runs first. It intelligently copies the custom add-ons from the `/app/custom_addons` staging directory into the server's live `behavior_packs` and `resource_packs` directories.
+3. **Python Wrapper** (`server_wrapper.py`) then starts and manages the `bedrock_server` as a subprocess, capturing its output and exposing the REST API.
+4. **FastAPI** provides the REST interface for external control.
+5. **Docker Compose** orchestrates the container and uses volume mounts to inject configurations, the `addons` staging directory, and world-specific pack activation files.
 
 ## Logging
 
