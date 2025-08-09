@@ -2,7 +2,13 @@
     {
         "file_system": "RawPath",
         "path": "behavior_packs/enhanced_pickaxe",
-        "uuid": "42daf507-50ab-47fc-a1c9-ef78b4233c09",
+        "uuid": "f4a1f1e0-1b2a-4b8e-9d4c-5a6b7c8d9e0f",
+        "version": "1.0.0"
+    },
+    {
+        "file_system": "RawPath",
+        "path": "resource_packs/lightsaber_resources",
+        "uuid": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
         "version": "1.0.0"
     }
 ]
