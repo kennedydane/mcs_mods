@@ -1,0 +1,33 @@
+services:
+  minecraft-server:
+    build: .
+    container_name: minecraft-bedrock-server
+    ports:
+      - "19132:19132/udp"  # Minecraft Bedrock server
+      - "8000:8000/tcp"    # Management API
+    volumes:
+      # Configuration files
+      - ./config/server.properties:/app/server.properties
+      - ./config/allowlist.json:/app/allowlist.json
+      - ./config/permissions.json:/app/permissions.json
+      
+      # World data (persistent)
+      - minecraft-worlds:/app/worlds
+      
+      # Add-ons
+      - ./behavior_packs:/app/behavior_packs
+      - ./resource_packs:/app/resource_packs
+      
+      # Logs (for external access)
+      - ./logs:/app/logs
+    environment:
+      - SERVER_NAME=Bedrock Server
+      - GAMEMODE=survival
+      - DIFFICULTY=easy
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  minecraft-worlds:
+    driver: local

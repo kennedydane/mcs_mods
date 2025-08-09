@@ -1,0 +1,33 @@
+services:
+  minecraft-server-test:
+    build: .
+    container_name: minecraft-bedrock-server-test
+    ports:
+      - "19133:19132/udp"  # Different port for testing
+      - "8001:8000/tcp"    # Different port for API
+    volumes:
+      # Test configuration files
+      - ./tests/fixtures/config/server.properties:/app/server.properties
+      - ./tests/fixtures/config/allowlist.json:/app/allowlist.json
+      - ./tests/fixtures/config/permissions.json:/app/permissions.json
+      
+      # Test world data (ephemeral)
+      - minecraft-test-worlds:/app/worlds
+      
+      # Test add-ons
+      - ./tests/fixtures/behavior_packs:/app/behavior_packs
+      - ./tests/fixtures/resource_packs:/app/resource_packs
+      
+      # Test logs
+      - ./tests/fixtures/logs:/app/logs
+    environment:
+      - SERVER_NAME=Test Bedrock Server
+      - GAMEMODE=creative
+      - DIFFICULTY=peaceful
+    restart: "no"  # Don't restart for tests
+    stdin_open: true
+    tty: true
+
+volumes:
+  minecraft-test-worlds:
+    driver: local
