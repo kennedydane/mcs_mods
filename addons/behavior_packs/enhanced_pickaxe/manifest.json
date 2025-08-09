@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "description": "Enhanced pickaxes with increased durability and mining speed",
+    "name": "Enhanced Pickaxe",
+    "uuid": "42daf507-50ab-47fc-a1c9-ef78b4233c09",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "description": "Enhanced Pickaxe Behavior Pack Module",
+      "type": "data",
+      "uuid": "e9d8c7b6-a5b4-4c3d-2e1f-0a9b8c7d6e5f",
+      "version": [1, 0, 0]
+    }
+  ]
+}

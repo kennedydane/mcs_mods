@@ -35,7 +35,7 @@ class TestDockerIntegration:
             except docker.errors.NotFound:
                 pass
             
-            # Start the test container using docker-compose
+            # Start the test container using docker compose
             subprocess.run([
                 "docker", "compose", "-f", "docker-compose.test.yml", "up", "-d"
             ], cwd=project_dir, check=True)
@@ -233,7 +233,7 @@ class TestEndToEndWorkflow:
             except docker.errors.NotFound:
                 pass
             
-            # Start the test container using docker-compose
+            # Start the test container using docker compose
             subprocess.run([
                 "docker", "compose", "-f", "docker-compose.test.yml", "up", "-d"
             ], cwd=project_dir, check=True)

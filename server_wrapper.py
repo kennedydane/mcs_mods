@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import subprocess
 import threading
 from contextlib import asynccontextmanager
@@ -50,6 +51,10 @@ class ServerManager:
         logger.info("Starting Minecraft Bedrock server...")
         
         try:
+            # Set the library path for the server
+            env = os.environ.copy()
+            env['LD_LIBRARY_PATH'] = '.'
+            
             # Start the bedrock server process
             self.process = subprocess.Popen(
                 ['./bedrock_server'],
@@ -59,7 +64,8 @@ class ServerManager:
                 text=True,
                 bufsize=1,
                 universal_newlines=True,
-                cwd='/app'
+                cwd='/app',
+                env=env
             )
             
             self.running = True

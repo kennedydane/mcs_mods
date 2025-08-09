@@ -13,10 +13,13 @@ services:
       
       # World data (persistent)
       - minecraft-worlds:/app/worlds
+
+      # World-specific add-on configuration
+      - ./world_configs/world_behavior_packs.json:/app/worlds/Bedrock level/world_behavior_packs.json
+      - ./world_configs/world_resource_packs.json:/app/worlds/Bedrock level/world_resource_packs.json
       
-      # Add-ons
-      - ./behavior_packs:/app/behavior_packs
-      - ./resource_packs:/app/resource_packs
+      # Custom add-ons (staged for entrypoint script)
+      - ./addons:/app/custom_addons
       
       # Logs (for external access)
       - ./logs:/app/logs
