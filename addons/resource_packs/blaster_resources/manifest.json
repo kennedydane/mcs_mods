@@ -4,7 +4,7 @@
     "description": "Blaster weapons resource pack with textures and models",
     "name": "Blaster Resources",
     "uuid": "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b",
-    "version": [1, 0, 3],
+    "version": [1, 1, 0],
     "min_engine_version": [1, 21, 0]
   },
   "modules": [
@@ -12,7 +12,7 @@
       "description": "Blaster weapons textures and models",
       "type": "resources",
       "uuid": "f0e9d8c7-b6a5-4c3d-2e1f-0a9b8c7d6e5f",
-      "version": [1, 0, 3]
+      "version": [1, 1, 0]
     }
   ]
 }
