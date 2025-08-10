@@ -7,6 +7,21 @@
     },
     "blaster_bolt": {
       "textures": "textures/items/blaster_bolt"
+    },
+    "bow_standby": {
+      "textures": "textures/items/blaster"
+    },
+    "bow_pulling_0": {
+      "textures": "textures/items/blaster"
+    },
+    "bow_pulling_1": {
+      "textures": "textures/items/blaster"
+    },
+    "bow_pulling_2": {
+      "textures": "textures/items/blaster"
+    },
+    "arrow": {
+      "textures": "textures/items/blaster_bolt"
     }
   }
 }
