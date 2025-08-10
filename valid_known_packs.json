@@ -9,12 +9,12 @@
         "file_system": "RawPath",
         "path": "behavior_packs/blaster_weapons",
         "uuid": "c3d4e5f6-7890-1234-cdef-567890123456",
-        "version": "1.0.0"
+        "version": "1.0.4"
     },
     {
         "file_system": "RawPath",
         "path": "resource_packs/blaster_resources",
         "uuid": "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b",
-        "version": "1.0.1"
+        "version": "1.0.3"
     }
 ]

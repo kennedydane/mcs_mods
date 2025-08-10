@@ -8,21 +8,23 @@
     },
     "components": {
       "minecraft:collision_box": {
-        "width": 0.1,
-        "height": 0.1
+        "width": 0.25,
+        "height": 0.25
       },
       "minecraft:projectile": {
         "on_hit": {
           "impact_damage": {
-            "damage": 20,
-            "knockback": true,
-            "semi_random_diff_damage": false
-          }
+            "damage": 50,
+            "knockback": false,
+            "semi_random_diff_damage": false,
+            "catch_fire": true
+          },
+          "remove_on_hit": {}
         },
-        "power": 5.0,
+        "power": 2.0,
         "gravity": 0.0,
         "angle_offset": 0.0,
-        "anchor": 1,
+        "anchor": 2,
         "offset": [0, -0.1, 0],
         "multiple_targets": false,
         "homing": false
