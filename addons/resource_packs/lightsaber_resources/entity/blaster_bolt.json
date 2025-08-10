@@ -4,20 +4,24 @@
     "description": {
       "identifier": "dane:blaster_bolt",
       "materials": {
-        "default": "entity_emissive"
+        "default": "snowball"
       },
       "textures": {
-        "default": "textures/entity/blaster_bolt"
+        "default": "textures/items/snowball"
       },
       "geometry": {
-        "default": "geometry.arrow"
+        "default": "geometry.item_sprite"
       },
-      "render_controllers": [ "controller.render.arrow" ],
-      "particle_effects": {
-        "trail": "minecraft:basic_flame_particle"
+      "render_controllers": [
+        "controller.render.item_sprite"
+      ],
+      "animations": {
+        "flying": "animation.actor.billboard"
       },
-      "sound_effects": {
-        "shoot": "random.bow"
+      "scripts": {
+        "animate": [
+          "flying"
+        ]
       }
     }
   }

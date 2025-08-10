@@ -33,7 +33,7 @@
         "slot": "bow"
       },
       "minecraft:use_animation": "crossbow",
-      "minecraft:use_duration": 0.0
+      "minecraft:use_duration": 0.1
     }
   }
 }

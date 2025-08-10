@@ -19,16 +19,11 @@
             "semi_random_diff_damage": false
           }
         },
-        "power": 3.5,
-        "gravity": 0.005,
-        "inertia": 1,
-        "liquid_inertia": 1,
-        "anchor": 0,
-        "offset": [0, 0, 0],
-        "semi_random_diff_damage": false,
-        "uncertainty_base": 0.1,
-        "uncertainty_multiplier": 0,
-        "reflect_on_hurt": false
+        "power": 5.0,
+        "gravity": 0.0,
+        "angle_offset": 0.0,
+        "anchor": 1,
+        "offset": [0, -0.1, 0]
       },
       "minecraft:physics": {},
       "minecraft:dimension_bound": {},
