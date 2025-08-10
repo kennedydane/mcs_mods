@@ -8,8 +8,8 @@
     },
     "components": {
       "minecraft:collision_box": {
-        "width": 0.31,
-        "height": 0.31
+        "width": 0.1,
+        "height": 0.1
       },
       "minecraft:projectile": {
         "on_hit": {
@@ -26,7 +26,8 @@
         "anchor": 0,
         "offset": [0, 0, 0],
         "semi_random_diff_damage": false,
-        "uncertainty_base": 0.0,
+        "uncertainty_base": 0.1,
+        "uncertainty_multiplier": 0,
         "reflect_on_hurt": false
       },
       "minecraft:physics": {},
