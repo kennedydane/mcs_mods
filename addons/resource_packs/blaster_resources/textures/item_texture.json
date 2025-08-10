@@ -1,10 +1,7 @@
 {
-  "resource_pack_name": "lightsaber_resources",
+  "resource_pack_name": "blaster_resources",
   "texture_name": "atlas.items",
   "texture_data": {
-    "lightsaber": {
-      "textures": "textures/items/lightsaber"
-    },
     "blaster": {
       "textures": "textures/items/blaster"
     },
