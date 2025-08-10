@@ -255,37 +255,60 @@ Create `addons/behavior_packs/enhanced_pickaxe/entities/blaster_bolt.json`. Base
 }
 ```
 
-**Performance & Accuracy Settings:**
-- `uncertainty_base: 0.0` - Perfect accuracy (no random spread)
-- `offset: [0, 0, 0]` - Projectiles spawn exactly where aimed
-- `anchor: 1` - Optimal spawn reference point
-- `power: 3.5` - High speed for long range
-- `gravity: 0.005` - Minimal drop over distance
-- `semi_random_diff_damage: false` - Consistent damage
-- `conditional_bandwidth_optimization` - Network performance boost
+**Final Optimized Settings (after extensive testing):**
+- Small collision box: `0.1x0.1` (prevents getting stuck)
+- Zero gravity: `gravity: 0.0` (perfectly straight trajectories)  
+- High speed: `power: 5.0` (matches player arrow speed)
+- Perfect aim: `angle_offset: 0.0` with `anchor: 1`
+- Anti-targeting: `multiple_targets: false`, `homing: false`
+- **No physics component** (causes stuck-in-air issues with custom projectiles)
+- `conditional_bandwidth_optimization` for network performance
+
+### Critical Discoveries from Testing
+
+**The Physics Component Problem:**
+- Vanilla projectiles like snowballs use `minecraft:physics: {}`
+- **Custom projectiles get stuck in mid-air with this component**
+- Always omit `minecraft:physics` for reliable custom projectiles
+
+**Collision Box Size Matters:**
+- Large collision boxes (`0.25x0.25`) cause getting stuck on invisible edges
+- Small collision boxes (`0.1x0.1`) prevent mid-air freezing
+- Smaller is better for fast, high-powered projectiles
+
+**Client Entity Rendering:**
+- Must use exact vanilla patterns: `geometry.item_sprite` + `controller.render.item_sprite`
+- Include billboard animation: `animation.actor.billboard`
+- Use vanilla materials: `"snowball"` (not custom emissive materials)
+
+**Accuracy Solutions:**
+- Remove ALL uncertainty settings for custom projectiles (don't copy arrow patterns)
+- Use `angle_offset: 0.0` instead of `uncertainty_base/multiplier` 
+- Disable auto-targeting with `multiple_targets: false` and `homing: false`
 
 ### Performance Tuning Guide
 
-**For Maximum Accuracy:**
-- Set `uncertainty_base: 0.0` in entity
-- Use `anchor: 1` for consistent spawn point
-- Set `offset: [0, 0, 0]` to eliminate aim offset
-- Disable `do_swing_animation` in ammunition
+**For Perfect Straight Flight:**
+- `gravity: 0.0` - No drop whatsoever
+- `angle_offset: 0.0` - No angular deviation
+- Small collision box (`0.1x0.1`) - Won't catch on edges
+- No `minecraft:physics` component - Prevents freezing
 
-**For Long Range:**
-- Increase `power` (3.5+ recommended)
-- Minimize `gravity` (0.005 or less)
-- Use `launch_power_scale: 2.0` in ammunition
+**For Maximum Speed & Range:**
+- `power: 5.0` - Player arrow speed (proven maximum)
+- `anchor: 1` - Eye-level spawn (consistent with vanilla)
+- `offset: [0, -0.1, 0]` - Vanilla projectile offset pattern
 
 **For Instant Firing:**
-- Set `max_draw_duration: 0.0` in shooter
-- Use `charge_on_draw: false`
-- Set `scale_power_by_draw_duration: false`
+- `max_draw_duration: 0.0` in shooter
+- `charge_on_draw: false`
+- `scale_power_by_draw_duration: false`
+- `minecraft:use_duration: 0.1` (must be > 0 to satisfy shooter component)
 
-**For Network Performance:**
-- Include `conditional_bandwidth_optimization` 
-- Use proven collision box sizes (0.31x0.31)
-- Set entities as non-spawnable/non-summonable
+**For Visual Consistency:**
+- Use vanilla texture paths: `"textures/items/snowball"`
+- Copy exact client entity patterns from Mojang samples
+- Include bandwidth optimization from vanilla projectiles
 
 ### Step 3: Add Textures and Client-Side Definitions
 
@@ -369,11 +392,11 @@ Follow these steps if something isn't working.
 - Look for server logs mentioning missing entities
 
 **Projectiles are inaccurate:**
-- Set `uncertainty_base: 0.0` in the projectile entity
-- Use `anchor: 1` instead of higher values
-- Ensure `offset: [0, 0, 0]` to eliminate spawn offset
+- Remove `uncertainty_base` and `uncertainty_multiplier` entirely from entity
+- Use `angle_offset: 0.0` in projectile entity (proven approach)
+- Set `anchor: 1` and `offset: [0, -0.1, 0]` (vanilla pattern)
+- Add `multiple_targets: false` and `homing: false` to prevent auto-targeting
 - Set `do_swing_animation: false` in ammunition item
-- Increase `launch_power_scale` to 2.0+ in ammunition
 
 **Projectiles don't go far enough:**
 - Increase `power` in projectile entity (3.5+ recommended)  
@@ -398,7 +421,22 @@ Follow these steps if something isn't working.
 - Set `semi_random_diff_damage: false` in both impact_damage and entity
 - Use fixed damage values, avoid damage ranges
 
+**Projectiles get stuck in mid-air:**
+- **Remove `minecraft:physics: {}` component entirely** (major cause)
+- Use smaller collision box (`0.1x0.1` instead of `0.25x0.25`)
+- Check for auto-targeting issues (`multiple_targets: false`, `homing: false`)
+- Avoid complex inertia settings (`inertia`, `liquid_inertia`)
+
+**Projectiles are invisible/not rendering:**
+- Use exact vanilla client entity patterns from Mojang samples
+- Geometry: `"geometry.item_sprite"` (not `geometry.cube` or custom)
+- Render controller: `"controller.render.item_sprite"`
+- Material: `"snowball"` (proven to work)
+- Include billboard animation: `"animation.actor.billboard"`
+- Use vanilla texture paths: `"textures/items/snowball"`
+
 **Network/Performance Issues:**
 - Add `conditional_bandwidth_optimization` component to entity
-- Use standard collision box sizes (0.31x0.31)
+- Use proven collision box sizes (`0.1x0.1` for fast projectiles)
 - Set entities as `is_spawnable: false, is_summonable: false`
+- Omit `minecraft:physics` component for custom projectiles
